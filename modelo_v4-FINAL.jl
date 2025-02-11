@@ -248,7 +248,7 @@ Matriz_Dist_n3 = [haversine([c1[1], c1[2]], [c2[1], c2[2]])/1000 for c1 in coord
 m_aux = [haversine([c1[1], c1[2]], [c2[1], c2[2]])/1000 for c1 in coords_inst_real_n1 , c2 in coords_inst_real_n2]
 
 #Calcular raio via outras metodologias!
-Dist_Maxima_Demanda_N1 = 3000/1000
+Dist_Maxima_Demanda_N1 = 1500/1000
 Dist_Maxima_n1_n2 = 10000/1000
 Dist_Maxima_n2_n3 = 25000/1000
 
@@ -313,7 +313,7 @@ Cap_n1 = 10000
 Cap_n2 = 150000
 Cap_n3 = 800000
  
-custo_deslocamento = 0.52 #Tem impacto no modelo? Testar outputs com variação!!
+custo_deslocamento = 3.52 #Tem impacto no modelo? Testar outputs com variação!!
 Custo_abertura_n1 = 2416382
 S_custo_fixo_n1 = 0.08 * 750000
 S_custo_variavel_n1 = [0.07 * 750000 / 10000, 0.07 * 750000 / 10000]
@@ -464,7 +464,7 @@ obj = objective_value(model)
 
 #Exportando resultados para excel!!
 
-nome_arquivo="resultados.xlsx"
+nome_arquivo="resultados_v2.xlsx"
 n_aba = 1
 
 XLSX.openxlsx(nome_arquivo, mode="rw") do arquivo
@@ -727,7 +727,10 @@ tipo_custos = [
 "custo_fixo_novos_n3",
 "custo_fixo_existente_n3",
 "custo_times_novos_n3",
-"custo_variavel_n3"
+"custo_variavel_n3", 
+"custo_primario",
+"custo_secundario",
+"custo_terciario"
 ]
 
 valores_custos = [
@@ -745,8 +748,10 @@ valores_custos = [
     value(custo_fixo_novos_n3),
     value(custo_fixo_existente_n3),
     value(custo_times_novos_n3),
-    value(custo_variavel_n3)
-    
+    value(custo_variavel_n3),
+    value(custo_fixo_novos_n1) + value(custo_fixo_existente_n1) + value(custo_times_novos_n1) + value(custo_variavel_n1), 
+    value(custo_fixo_novos_n2) + value(custo_fixo_existente_n2) + value(custo_times_novos_n2) + value(custo_variavel_n2), 
+    value(custo_fixo_novos_n3) + value(custo_fixo_existente_n3) + value(custo_times_novos_n3) + value(custo_variavel_n3), 
 ]
 
 
@@ -759,7 +764,7 @@ XLSX.openxlsx(nome_arquivo, mode="rw") do arquivo
     planilha["B1"] = "Valor"
 
     linha = 2 
-    for i in 1:15
+    for i in 1:18
 
         planilha["A$linha"] = tipo_custos[i]
         planilha["B$linha"] = valores_custos[i]
