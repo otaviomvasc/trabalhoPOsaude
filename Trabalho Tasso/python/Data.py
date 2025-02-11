@@ -23,7 +23,8 @@ class Data:
             1: 'P.O Saude/dados_json/novas_unidades_nivel_1.json',
             2: 'P.O Saude/dados_json/novas_unidades_nivel_2.json',
             3: 'P.O Saude/dados_json/novas_unidades_nivel_3.json'}
-
+        self.MS = 'P.O Saude/dados_json/MS.json'
+        self.capacity = 'P.O Saude/dados_json/capacidade.json'
     def load_json(self, file_path):
         with open(file_path, 'r', encoding='utf-8') as file:
             return json.load(file)
@@ -35,6 +36,8 @@ class Data:
         cnes_data = {level: self.load_json(file) for level, file in self.cnes_files.items()}
         distance_data = {level: self.load_json(file) for level, file in self.distance_files.items()}
         newLevel_data = {level: self.load_json(file) for level, file in self.newLevel_files.items()}
+        ms = self.load_json(self.MS)
+        cap = self.load_json(self.capacity)
         I = [d['NOME'] for d in demand_data]
         K = [1, 2, 3]
         P = [1, 2]
@@ -43,44 +46,52 @@ class Data:
         EL = {level: [el['name'] for el in data] for level, data in level_data.items()}
         CL = {level: [el['name'] for el in data] for level, data in newLevel_data.items()}
         L = {level: EL.get(level, []) + CL.get(level, []) for level in set(EL.keys()).union(CL.keys())}
-
-        CE = {level: {e: 1000 for e in equipe['descricao_cbo']} for level, equipe in equipe_data.items()}
+        L[0] = I # teste
+        EL[0] = I # teste
+        # considerando um custo maior do que o piso
+        CE = {k: {team: 1.6*vals[1] for team, vals in ms.get(str(k), {}).items()} for k in K}
         
-        D1 = distance_data[1]
-        D2 = distance_data[2]
-        D3 = distance_data[3]
+        D = {k: distance_data[k] for k in K}
 
         # Fixed generation of TC1, TC2, TC3 using dictionary comprehensions
-        TC1 = {i: {j: 0.5 for j in D1[i].keys()} for i in D1}
-        TC2 = {i: {j: 0.5 for j in D2[i].keys()} for i in D2}
-        TC3 = {i: {j: 0.5 for j in D3[i].keys()} for i in D3}
-
-        VC1 = {(p, el): 5 for p in P for el in L[1]}
-        VC2 = {(p, el): 10 for p in P for el in L[2]}
-        VC3 = {(p, el): 20 for p in P for el in L[3]}
-
-        FC1 = {el: 1000 for el in L[1]}
-        FC2 = {el: 200 for el in L[2]}
-        FC3 = {el: 300 for el in L[3]}
+        TC ={k: {i: {j: 0.5 for j in D[k][i].keys()} for i in D[k]} for k in K}
+        FC = {1: {el: 350000 for el in L[1]},
+              2: {el: 500000 for el in L[2]},
+              3: {el: 700000 for el in L[3]}}
 
         W = {(d['NOME'], 1): d['QTDPESSOAS'] * 0.6 for d in demand_data}
         W.update({(d['NOME'], 2): d['QTDPESSOAS'] * 0.4 for d in demand_data})
 
-        MS1 = {e: 0.02 for e in E[1]}
-        MS2 = {e: 0.01 for e in E[2]}
-        MS3 = {e: 0.01 for e in E[3]}
+        MS = {k: {team: vals[0] for team, vals in ms.get(str(k), {}).items()} for k in K}
 
-        CNES1 = cnes_data[1]
-        CNES2 = cnes_data[2]
-        CNES3 = cnes_data[3]
+        CNES = {k: cnes_data[k] for k in K}
 
-        C1 = {(p, el): 10000 for p in P for el in L[1]}
-        C2 = {el: 100000 for el in L[2]}
-        C3 = {el: 100000 for el in L[3]}
-
-        U = {1: 10, 2: 10, 3: 10}
-        O1 = {el: 0.4 for el in L[1]}
-        O2 = {el: 0.7 for el in L[2]}
+        # cerca de 40% das pessoas tem alguma croninca
+        ## a capacidae precisa ser altamente revisada no nivel 1
+        # fazer com base em leitos disponiveis em cada local
+        # para unidades novas colocar um valor fixo
+        # 2315560.0/161 = 14.382,36
+        # a capacidade é calculada sendo 10.000 + 416.67 * leitos esse numero foi tirado com base na qunatidade de leitos por habitante
+        C = {# toda unidade que não estiver caalogada recebe o valor medio dos nivel
+            k: {
+                el: cap[f'{k}'][el] if el in cap[f'{k}'] else sum(cap[f'{k}'].values()) / len(cap[f'{k}'])
+                for el in L[k]
+            }
+            for k in K
+        }
+        U = {1: 54, 2: 10, 3: 1}# maximo permit
+        O = {k: {el: 0.6 if k==1 else 0.4 for el in L[k]} for k in range(1,len(K))}
+        
+        ##########################################
+        # calculo de custo de atendimento
+        # Não tenho dados para isso
+        # 869319225.44 atenção basica -> 375,42 por pessoa
+        # 1020903232,12 atemção secundaria e terciaria -> 2315560
+        # não sei dizer se esses gastos estão unidos com os custo fixos + pessoal por ano
+        # 1020903232/(2315560/0.8) =     
+        VC = {  1: {(p, el): 375.42/12 for p in P for el in L[1]},
+                2: {(p, el): 440.88/12 for p in P for el in L[2]},
+                3: {(p, el): 440.88 for p in P for el in L[3]}}
 
         return {
             'I': I,
@@ -90,34 +101,17 @@ class Data:
             'EL': EL,
             'CL': CL,
             'L': L,
-            'CE1': CE[1],
-            'CE2': CE[2],
-            'CE3': CE[3],
-            'D1': D1,
-            'D2': D2,
-            'D3': D3,
-            'TC1': TC1,
-            'TC2': TC2,
-            'TC3': TC3,
-            'VC1': VC1,
-            'VC2': VC2,
-            'VC3': VC3,
-            'FC1': FC1,
-            'FC2': FC2,
-            'FC3': FC3,
+            'CE': CE,
+            'D': D,
+            'TC': TC,
+            'VC': VC,
+            'FC': FC,
             'W': W,
-            'MS1': MS1,
-            'MS2': MS2,
-            'MS3': MS3,
-            'CNES1': CNES1,
-            'CNES2': CNES2,
-            'CNES3': CNES3,
-            'C1': C1,
-            'C2': C2,
-            'C3': C3,
+            'MS': MS,
+            'CNES': CNES,
+            'C': C,
             'U': U,
-            'O1': O1,
-            'O2': O2
+            'O': O,
         }
 
 class Data_test:

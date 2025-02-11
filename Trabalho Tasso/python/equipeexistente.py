@@ -1,7 +1,7 @@
 import pandas as pd
 import json
 
-def process_professionals(professionals_csv, el_json, output_json, cnes_output_json, include_cbo):
+def process_professionals(professionals_csv, el_json, output_json, cnes_output_json, include_cbo, level):
     # Load the professionals CSV file with specified dtype
     dtype = {
         'NOME': str, 'CNS': str, 'SEXO': str, 'IBGE': str, 'UF': str, 'MUNICIPIO': str,
@@ -27,20 +27,18 @@ def process_professionals(professionals_csv, el_json, output_json, cnes_output_j
 
     # Aggregate information
     descricao_cbo_freq = df_sus['DESCRICAO CBO'].value_counts().to_dict()
-    custo_cbo = df_sus.groupby('DESCRICAO CBO')['CH HOSP.'].apply(lambda x: (x * 10).sum()).to_dict()  # Example cost calculation
-
     # Apply Pareto principle to include only the top 80% of frequencies
     aggregated_data = {
         'descricao_cbo': {},
         'custo_cbo': {}
     }
+    freq_threshold = 0.9 if level == '2' else 0.8
     total_freq = sum(descricao_cbo_freq.values())
     cumulative_freq = 0
-    for cbo, freq in descricao_cbo_freq.items():
-        if cumulative_freq / total_freq <= 0.8:#pareto
-            aggregated_data['descricao_cbo'][cbo] = freq
-            aggregated_data['custo_cbo'][cbo] = custo_cbo[cbo]
-            cumulative_freq += freq
+    for cbo, cbo_freq in descricao_cbo_freq.items():
+        if cumulative_freq / total_freq <= freq_threshold:#pareto
+            aggregated_data['descricao_cbo'][cbo] = cbo_freq
+            cumulative_freq += cbo_freq
         else:
             break
 
@@ -91,7 +89,7 @@ if __name__ == "__main__":
         "AUXILIAR DE ENFERMAGEM DA ESTRATEGIA DE SAUDE DA FAMILIA",
         "AGENTE DE COMBATE AS ENDEMIAS",
         "PSICOLOGO CLINICO",
-        "ASSISTENTE SOCIAL",#incluir?
+        # "ASSISTENTE SOCIAL",#incluir?
         "FISIOTERAPEUTA GERAL",
         "GERENTE DE SERVICOS DE SAUDE",
         "DOSIMETRISTA CLINICO",
@@ -226,4 +224,4 @@ if __name__ == "__main__":
         output_json = f'P.O Saude/dados_json/Equipe_{level}.json'  # Replace with your output JSON file path
         cnes_output_json = f'P.O Saude/dados_json/CNES_{level}.json'  # Replace with your CNES output JSON file path
 
-        process_professionals(professionals_csv, el_json, output_json, cnes_output_json, include_cbo)
+        process_professionals(professionals_csv, el_json, output_json, cnes_output_json, include_cbo, level)
