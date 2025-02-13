@@ -248,7 +248,7 @@ Matriz_Dist_n3 = [haversine([c1[1], c1[2]], [c2[1], c2[2]])/1000 for c1 in coord
 m_aux = [haversine([c1[1], c1[2]], [c2[1], c2[2]])/1000 for c1 in coords_inst_real_n1 , c2 in coords_inst_real_n2]
 
 #Calcular raio via outras metodologias!
-Dist_Maxima_Demanda_N1 = 1500/1000
+Dist_Maxima_Demanda_N1 = 3000/1000
 Dist_Maxima_n1_n2 = 10000/1000
 Dist_Maxima_n2_n3 = 25000/1000
 
@@ -313,7 +313,7 @@ Cap_n1 = 10000
 Cap_n2 = 150000
 Cap_n3 = 800000
  
-custo_deslocamento = 3.52 #Tem impacto no modelo? Testar outputs com variação!!
+custo_deslocamento = 0.52 #Tem impacto no modelo? Testar outputs com variação!!
 Custo_abertura_n1 = 2416382
 S_custo_fixo_n1 = 0.08 * 750000
 S_custo_variavel_n1 = [0.07 * 750000 / 10000, 0.07 * 750000 / 10000]
@@ -464,7 +464,7 @@ obj = objective_value(model)
 
 #Exportando resultados para excel!!
 
-nome_arquivo="resultados_v2.xlsx"
+nome_arquivo="resultados.xlsx"
 n_aba = 1
 
 XLSX.openxlsx(nome_arquivo, mode="rw") do arquivo
@@ -479,7 +479,17 @@ XLSX.openxlsx(nome_arquivo, mode="rw") do arquivo
 
     linha = 2  # Começa na linha 2 (linha 1 tem cabeçalhos)
     for d in S_Pontos_Demanda, n1 in dominio_atr_n1[d]
-        planilha["A$linha"] = df_m.CD_SETOR[d]  # Indice da CS
+        planilha["A$linha"] = df_m.CD_SETOR[d]
+        if value(Aloc_[d, n1]) < 0.3
+            vl = 0
+            fl1 = 0
+            fl2 = 0
+        else
+            vl = value(Aloc_[d, n1])
+            fl1 = value(fluxo_n1[d, n1, 1])
+            fl2 = value(fluxo_n1[d, n1, 2])
+
+        end  
         if n1 > qntd_n1_real
             planilha["B$linha"] = n1
         else

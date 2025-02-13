@@ -305,7 +305,7 @@ class PosOtimizacao:
             fig.show()
 
     def plota_mapa_atribuicoes(self):
-        def plota_mapas(df):
+        def plota_mapas(df, nivel):
             latitude_origem = df.Latitude_Origem
             longitude_origem = df.Longitude_Origem
             m = folium.Map(
@@ -347,7 +347,8 @@ class PosOtimizacao:
                     opacity=0.7,
                 ).add_to(m)
 
-            m.save("index.html")
+            name = f"mapa_{nivel}.html"
+            m.save(name)
 
         # Formatação df primário!
         df_atr = self.atribuicoes[
@@ -442,8 +443,9 @@ class PosOtimizacao:
             inplace=True,
         )
 
-        plota_mapas(df_n1)
-        df = df_n1.copy()
+        plota_mapas(df_n1, "primario")
+        plota_mapas(df_n2, "secundario")
+        plota_mapas(df_n3, "terciario")
 
     def plota_utilizacoes_instalacoes(self):
         for lvl in pd.unique(self.atribuicoes.nivel):
