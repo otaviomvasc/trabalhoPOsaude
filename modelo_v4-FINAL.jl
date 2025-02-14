@@ -87,8 +87,8 @@ for cn in df_n1[!, "cnes"]
         end
     end
     
-    list_fim = hcat(list_fim, list_aux)
-    list_aux = vcat()
+    global list_fim = hcat(list_fim, list_aux)
+    global list_aux = vcat()
 end
 
 qntd_equipes_por_n1 = (list_fim[:, 2:end])'
@@ -137,8 +137,8 @@ for cn in df_n2[!, "cnes"]
         end
     end
     
-    list_fim = hcat(list_fim, list_aux)
-    list_aux = vcat()
+    global list_fim = hcat(list_fim, list_aux)
+    global list_aux = vcat()
 end
 
 S_capacidade_CNES_n2 = (list_fim[:, 2:end])'
@@ -183,8 +183,8 @@ for cn in df_n3[!, "cnes"]
         end
     end
     
-    list_fim = hcat(list_fim, list_aux)
-    list_aux = vcat()
+    global list_fim = hcat(list_fim, list_aux)
+    global list_aux = vcat()
 end
 
 S_capacidade_CNES_n3 = list_fim[:, 2:end]'
